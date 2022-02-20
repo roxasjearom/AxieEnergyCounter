@@ -5,7 +5,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -31,7 +30,7 @@ import com.roxasjearom.axieenergycalculator.ui.theme.AxieEnergyCalculatorTheme
 @ExperimentalComposeUiApi
 class MainActivity : ComponentActivity() {
 
-    private val viewModel by viewModels<MainViewModel>()
+    private val viewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,20 +41,16 @@ class MainActivity : ComponentActivity() {
                         viewModel = viewModel,
                         onEnergyIncreased = {
                             viewModel.increaseEnergy()
-                            Log.e("ENERGY INC", "ENERGY: ${viewModel.energyCount}")
                         },
                         onEnergyDecreased = {
                             viewModel.decreaseEnergy()
-                            Log.e("ENERGY DEC", "ENERGY: ${viewModel.energyCount}")
                         },
                          onReset = {
                              viewModel.resetState()
-                             Log.e("RESET", "ENERGY: ${viewModel.energyCount}")
                          },
                         onNextRound = {
                             viewModel.increaseEnergyAfterRound()
                             viewModel.incrementRound()
-                            Log.e("NEXT ROUND", "ENERGY: ${viewModel.energyCount}")
                         }
                     )
                 }
@@ -73,7 +68,7 @@ fun MainScreen(
     onNextRound: () -> Unit,
     onReset: () -> Unit,
 ) {
-    var myDragAmount by remember { mutableStateOf(0f) }
+    var horizontalDragAmount by remember { mutableStateOf(0f) }
     val context = LocalContext.current
 
     Box {
@@ -84,16 +79,14 @@ fun MainScreen(
                 .pointerInput(Unit) {
                     detectHorizontalDragGestures(
                         onDragEnd = {
-                            if (myDragAmount > 1) { //SWIPE RIGHT
+                            if (horizontalDragAmount > 1) { //SWIPE RIGHT
                                 onEnergyIncreased()
-                                Log.e("SWIPE RIGHT", "RIGHT")
-                            } else if (myDragAmount < -1) { //SWIPE LEFT
+                            } else if (horizontalDragAmount < -1) { //SWIPE LEFT
                                 onEnergyDecreased()
-                                Log.e("SWIPE LEFT", "LEFT")
                             }
                         },
                         onHorizontalDrag = { _, dragAmount ->
-                            myDragAmount = dragAmount
+                            horizontalDragAmount = dragAmount
                         }
                     )
                 }
