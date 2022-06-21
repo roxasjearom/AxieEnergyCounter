@@ -12,23 +12,46 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.roxasjearom.axieenergycalculator.utils.vibrate
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.roxasjearom.axieenergycalculator.R
 import com.roxasjearom.axieenergycalculator.ui.theme.AxieEnergyCalculatorTheme
+import com.roxasjearom.axieenergycalculator.utils.vibrate
 
-@ExperimentalComposeUiApi
 @Composable
 fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
-    var horizontalDragAmount by remember { mutableStateOf(0f) }
     val context = LocalContext.current
+    GestureContainer(
+        roundSlot = { RoundDisplay(roundCount = viewModel.mainDisplayUiState.collectAsState().value.roundCount) },
+        energySlot = { EnergyDisplay(energyCount = viewModel.mainDisplayUiState.collectAsState().value.energyCount) },
+        onSwipeRight = { viewModel.increaseEnergy() },
+        onSwipeLeft = { viewModel.decreaseEnergy() },
+        onDoubleTap = {
+            viewModel.increaseEnergyAfterRound()
+            viewModel.incrementRound()
+            vibrate(context)
+        },
+        onResetClicked = { viewModel.resetState() }
+    )
+}
+
+@Composable
+fun GestureContainer(
+    roundSlot: @Composable () -> Unit,
+    energySlot: @Composable () -> Unit,
+    onSwipeRight: () -> Unit,
+    onSwipeLeft: () -> Unit,
+    onDoubleTap: () -> Unit,
+    onResetClicked: () -> Unit,
+    ) {
+    var horizontalDragAmount by remember { mutableStateOf(0f) }
 
     Box {
         Column(
@@ -39,9 +62,9 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
                     detectHorizontalDragGestures(
                         onDragEnd = {
                             if (horizontalDragAmount > 1) { //SWIPE RIGHT
-                                viewModel.increaseEnergy()
+                                onSwipeRight()
                             } else if (horizontalDragAmount < -1) { //SWIPE LEFT
-                                viewModel.decreaseEnergy()
+                                onSwipeLeft()
                             }
                         },
                         onHorizontalDrag = { _, dragAmount ->
@@ -52,26 +75,22 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
                 .pointerInput(Unit) {
                     detectTapGestures(
                         onDoubleTap = {
-                            viewModel.increaseEnergyAfterRound()
-                            viewModel.incrementRound()
-                            vibrate(context)
+                            onDoubleTap()
                         }
                     )
                 },
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            RoundDisplay(roundCount = viewModel.mainDisplayUiState.collectAsState().value.roundCount)
-
-            EnergyDisplay(energyCount = viewModel.mainDisplayUiState.collectAsState().value.energyCount)
+            roundSlot()
+            energySlot()
         }
-
         ResetButton(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 32.dp, start = 64.dp, end = 64.dp)
                 .align(Alignment.BottomCenter)
         ) {
-            viewModel.resetState()
+            onResetClicked()
         }
     }
 }
@@ -83,7 +102,7 @@ fun RoundDisplay(
 ) {
     Text(
         modifier = modifier,
-        text = "ROUND $roundCount",
+        text = stringResource(id = R.string.round_format, roundCount).uppercase(),
         style = MaterialTheme.typography.h5,
         fontWeight = FontWeight.SemiBold
     )
@@ -104,8 +123,8 @@ fun EnergyDisplay(
             fontSize = 132.sp,
         )
         Text(
-            text = "ENERGY",
-            style = MaterialTheme.typography.h6
+            text = stringResource(R.string.label_energy).uppercase(),
+            style = MaterialTheme.typography.h6,
         )
     }
 }
@@ -122,11 +141,11 @@ fun ResetButton(
     ) {
         Icon(
             imageVector = Icons.Filled.Refresh,
-            contentDescription = "Reset",
+            contentDescription = stringResource(R.string.label_reset),
             modifier = Modifier.padding(8.dp)
         )
         Text(
-            text = "RESET",
+            text = stringResource(R.string.label_reset).uppercase(),
             modifier = Modifier.padding(8.dp)
         )
     }
